@@ -1,5 +1,4 @@
-// Show context menu that allows enabling/disabling on a per-domain basis.
-chrome.browserAction.onClicked.addListener(tab => {
+chrome.action.onClicked.addListener(tab => {
     const { origin } = new URL(tab.url);
     chrome.permissions.contains({
         origins: [origin + "/*"],
@@ -37,19 +36,18 @@ function injectScriptIfNecessary(tab) {
             origins: [origin + "/*"]
         }, (hasPermission) => {
             if (hasPermission) {
-                chrome.tabs.executeScript(tab.id, {
-                    runAt: "document_start",
-                    allFrames: true,
-                    file: "installDisableAutogain.js",
+                chrome.scripting.executeScript({
+                    target: { tabId: tab.id, allFrames: true },
+                    files: ["installDisableAutogain.js"],
                 });
             }
-            chrome.browserAction.setTitle({
+            chrome.action.setTitle({
                 title: hasPermission
                     ? "Disable Automatic Gain Control"
                     : "Enable Automatic Gain Control",
                 tabId: tab.id,
             });
-            chrome.browserAction.setBadgeText({
+            chrome.action.setBadgeText({
                 text: hasPermission ? "On" : "",
                 tabId: tab.id,
             });
@@ -61,13 +59,13 @@ function injectScriptIfNecessary(tab) {
 
 function showUsage() {
     chrome.tabs.create({
-        url: chrome.extension.getURL("usage.html")
+        url: chrome.runtime.getURL("usage.html")
     });
 }
 
 function showUpgradeNotice() {
     chrome.tabs.create({
-        url: chrome.extension.getURL("upgradeFromV1.0.html")
+        url: chrome.runtime.getURL("upgradeFromV1.0.html")
     });
 }
 
@@ -87,7 +85,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 chrome.contextMenus.create({
     title: "Usage",
-    contexts: ["browser_action"],
+    contexts: ["action"],
     onclick: () => {
         showUsage();
     }
