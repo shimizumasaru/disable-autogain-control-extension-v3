@@ -57,18 +57,6 @@ function injectScriptIfNecessary(tab) {
     }
 }
 
-function showUsage() {
-    chrome.tabs.create({
-        url: chrome.runtime.getURL("usage.html")
-    });
-}
-
-function showUpgradeNotice() {
-    chrome.tabs.create({
-        url: chrome.runtime.getURL("upgradeFromV1.0.html")
-    });
-}
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (typeof message === "object" && message["type"] === "enable-meet-hangouts") {
         chrome.permissions.request({
@@ -83,18 +71,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 });
 
-chrome.contextMenus.create({
-    title: "Usage",
-    contexts: ["action"],
-    onclick: () => {
+chrome.runtime.onInstalled.addListener(() => {
+    // 必ずIDを指定してコンテキストメニューを作成
+    chrome.contextMenus.create({
+        id: "sampleContextMenu",  // IDを追加
+        title: "Usage",
+        contexts: ["action"]
+    }, function() {
+        if (chrome.runtime.lastError) {
+            console.error("Failed to create context menu:", chrome.runtime.lastError.message);
+        } else {
+            console.log("Context menu created successfully.");
+        }
+    });
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId === "sampleContextMenu") {
         showUsage();
     }
 });
 
-chrome.runtime.onInstalled.addListener(({ reason, previousVersion }) => {
-    if (reason === "update" && previousVersion === "1.0") {
-        showUpgradeNotice();
-    } else if (reason === "install") {
-        showUsage();
-    }
-});
+function showUsage() {
+    chrome.tabs.create({
+        url: chrome.runtime.getURL("usage.html")
+    });
+}
